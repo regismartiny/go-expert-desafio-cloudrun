@@ -1,29 +1,33 @@
 package main
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/regismartiny/desafio-cloudrun/configs"
+	"github.com/regismartiny/desafio-cloudrun/internal/usecase"
+	"github.com/regismartiny/desafio-cloudrun/internal/validators"
 	"github.com/regismartiny/desafio-cloudrun/internal/viacep"
 	"github.com/regismartiny/desafio-cloudrun/internal/weatherapi"
 )
 
 type HandlerData struct {
-	ViacepClient     *viacep.Client
-	WeatherapiClient *weatherapi.Client
+	GetTemperatureUseCase *usecase.GetTemperatureUseCase
 }
 
 func main() {
 
 	config, _ := configs.LoadConfig(".")
 
+	cepValidator := validators.NewCepValidator()
+	viaCepClient := getViaCepClient(config.ViaCepAPIBaseURL, config.ViaCepAPIToken)
+	weatherApiClient := getWeatherClient(config.WeatherAPIBaseURL, config.WeatherAPIToken)
+
 	h := &HandlerData{
-		ViacepClient:     getViaCepClient(config.ViaCepAPIBaseURL, config.ViaCepAPIToken),
-		WeatherapiClient: getWeatherClient(config.WeatherAPIBaseURL, config.WeatherAPIToken),
+		GetTemperatureUseCase: usecase.NewGetTemperatureUseCase(cepValidator, viaCepClient, weatherApiClient),
 	}
 
 	mux := http.NewServeMux()
@@ -37,7 +41,7 @@ func main() {
 
 	err := server.ListenAndServe()
 	if err != nil {
-		fmt.Println("Erro:", err)
+		fmt.Println("Error:", err)
 	}
 }
 
@@ -61,41 +65,32 @@ func (h *HandlerData) handleGet(w http.ResponseWriter, r *http.Request) {
 
 	cep := r.PathValue("cep")
 
-	ctx := context.Background()
-
-	//Viacep
-
-	adrressInfo, err := h.ViacepClient.GetAddressInfo(&ctx, cep)
+	output, err := h.GetTemperatureUseCase.Execute(cep)
 	if err != nil {
-		log.Println(err)
+		statusCode := getStatusCode(err.Error())
+
+		w.WriteHeader(statusCode)
+		w.Write([]byte(err.Error()))
+		return
 	}
 
-	log.Println("Address info")
-	log.Println(adrressInfo)
+	log.Println(output)
 
-	cidade := adrressInfo.Localidade
-
-	log.Println("Cidade: " + cidade)
-
-	//WeatherAPI
-
-	weatherInfo, err := h.WeatherapiClient.GetWeatherInfo(&ctx, cidade)
+	bytes, err := json.Marshal(output)
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 
-	log.Println("Weather info")
-	log.Println(weatherInfo)
-
-	json := fmt.Sprintf("{ \"temp_C\": %f, \"temp_F\": %f, \"temp_K\": %f }",
-		weatherInfo.Current.TempC,
-		weatherInfo.Current.TempF,
-		convertCelsiusToKelvin(weatherInfo.Current.TempC))
-
-	log.Println(json)
-	w.Write([]byte(json))
+	w.Write([]byte(bytes))
 }
 
-func convertCelsiusToKelvin(celsius float64) float64 {
-	return celsius + 273
+func getStatusCode(errorMsg string) int {
+	switch errorMsg {
+	case "invalid zipcode":
+		return http.StatusUnprocessableEntity
+	case "can not find zipcode":
+		return http.StatusNotFound
+	default:
+		return http.StatusInternalServerError
+	}
 }

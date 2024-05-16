@@ -41,7 +41,33 @@ Desenvolver um sistema em Go que receba um CEP, identifica a cidade e retorna o 
 - Utilize docker/docker-compose para que possamos realizar os testes de sua aplicação.
 - Deploy realizado no Google Cloud Run (free tier) e endereço ativo para ser acessado.
 
+### Instruções para execução dos testes:
+
+```bash
+go test -v internal/usecase/*
+```
+
 ## Instruções de uso
 
-Acessar: 
+### Execução local via Docker
+
+
+```bash
+#Criar a imagem do container docker:
+docker build -t go-server .
+
+#Iniciar container:
+docker run -p 8080:8080 go-server
+```
+
+Acessar: http://localhost:8080/temperatura/{cep}\
+Ex: http://localhost:8080/temperatura/95770000
+
+### Acesso via hospedagem Google Cloud Run
+
+Acessar o endereço abaixo informando o cep que deseja consultar:\
+https://go-expert-desafio-cloudrun-pxwwhvcvfa-uc.a.run.app/temperatura/{cep}
+
+Exemplo:\
+https://go-expert-desafio-cloudrun-pxwwhvcvfa-uc.a.run.app/temperatura/95770000
 

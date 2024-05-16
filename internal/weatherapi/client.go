@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 )
@@ -66,8 +67,10 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) error {
 
 func (c *Client) GetWeatherInfo(ctx *context.Context, cidade string) (Weather, error) {
 
-	req, err := http.NewRequestWithContext(*ctx, "GET",
-		fmt.Sprintf("%s/current.json?q=%s&key=%s", c.BaseURL, cidade, c.apiKey), nil)
+	url := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", c.BaseURL, c.apiKey, cidade)
+	log.Println(url)
+
+	req, err := http.NewRequestWithContext(*ctx, "GET", url, nil)
 	if err != nil {
 		return Weather{}, err
 	}
