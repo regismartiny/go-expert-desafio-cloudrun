@@ -51,14 +51,9 @@ go test -v internal/usecase/*
 
 ### Execução local via Docker
 
-
 ```bash
-#Criar a imagem do container docker:
-docker build -t go-server .
-
-#Iniciar container:
-docker run -p 8080:8080 go-server
-```
+docker-compose up
+````
 
 Acessar: http://localhost:8080/temperatura/{cep}\
 Ex: http://localhost:8080/temperatura/95770000
