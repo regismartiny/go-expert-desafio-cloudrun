@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -67,19 +66,15 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) error {
 
 func (c *Client) GetWeatherInfo(ctx *context.Context, cidade string) (Weather, error) {
 
-	u := c.BaseURL.JoinPath("/current.json")
+	url := c.BaseURL.JoinPath("/current.json")
 
-	q := u.Query()
+	q := url.Query()
 	q.Set("key", c.apiKey)
 	q.Set("aqi", "no")
 	q.Set("q", cidade)
+	url.RawQuery = q.Encode()
 
-	u.RawQuery = q.Encode()
-	url := u.String()
-
-	log.Println(url)
-
-	req, err := http.NewRequestWithContext(*ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(*ctx, "GET", url.String(), nil)
 	if err != nil {
 		return Weather{}, err
 	}
