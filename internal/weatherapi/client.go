@@ -67,7 +67,16 @@ func (c *Client) sendRequest(req *http.Request, v interface{}) error {
 
 func (c *Client) GetWeatherInfo(ctx *context.Context, cidade string) (Weather, error) {
 
-	url := fmt.Sprintf("%s/current.json?key=%s&q=%s&aqi=no", c.BaseURL, c.apiKey, cidade)
+	u := c.BaseURL.JoinPath("/current.json")
+
+	q := u.Query()
+	q.Set("key", c.apiKey)
+	q.Set("aqi", "no")
+	q.Set("q", cidade)
+
+	u.RawQuery = q.Encode()
+	url := u.String()
+
 	log.Println(url)
 
 	req, err := http.NewRequestWithContext(*ctx, "GET", url, nil)
