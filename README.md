@@ -55,7 +55,7 @@ go test -v internal/usecase/*
 docker-compose up
 ````
 
-Acessar: http://localhost:8080/temperatura/{cep}\
+Acessar: http://localhost:8080/temperatura/{cep} \
 Ex: http://localhost:8080/temperatura/95770000
 
 ### Acesso via hospedagem Google Cloud Run
